@@ -29,7 +29,7 @@ This project used as API in project [redis-rdb-cli](https://github.com/leonchen8
         <dependency>
             <groupId>com.moilioncircle</groupId>
             <artifactId>redis-rdb-cli-api</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -147,7 +147,7 @@ public class YourFormatter extends AbstractFormatter {
     }
 
     @Override
-    public Event applyString(RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
+    public Event applyString(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         BaseRdbParser parser = new BaseRdbParser(in);
         byte[] val = parser.rdbLoadEncodedStringObject().first();
         getEscaper().encode(key, getOutputStream());
