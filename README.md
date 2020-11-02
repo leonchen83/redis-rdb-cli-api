@@ -152,7 +152,7 @@ public class YourFormatter extends AbstractFormatter {
         byte[] val = parser.rdbLoadEncodedStringObject().first();
         OutputStreams.write(key, getOutputStream());
         OutputStreams.write(val, getOutputStream());
-        OutputStreams.write("\n".getBytes(), getOutputStream());
+        OutputStreams.write('\n', getOutputStream());
         return context.valueOf(new DummyKeyValuePair());
     }
 }
