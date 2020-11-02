@@ -152,7 +152,7 @@ public class YourFormatterService extends AbstractFormatterService {
         byte[] val = parser.rdbLoadEncodedStringObject().first();
         getEscaper().encode(key, getOutputStream());
         getEscaper().encode(val, getOutputStream());
-        getEscaper().encode('\n', getOutputStream());
+        getOutputStream().write('\n');
         return context;
     }
 }
