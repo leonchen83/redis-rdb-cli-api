@@ -24,7 +24,7 @@ import com.moilioncircle.redis.rdb.cli.api.format.escape.Escaper;
 /**
  * @author Baoyi Chen
  */
-public abstract class AbstractFormatter implements Formatter {
+public abstract class AbstractFormatterService implements FormatterService {
     
     protected Escaper escaper;
     protected Properties properties;

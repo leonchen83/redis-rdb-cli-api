@@ -29,7 +29,7 @@ import com.moilioncircle.redis.replicator.rdb.datatype.ContextKeyValuePair;
 /**
  * @author Baoyi Chen
  */
-public interface Formatter {
+public interface FormatterService {
 
     String getName();
     

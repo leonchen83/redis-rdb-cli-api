@@ -133,13 +133,13 @@ your.package.YourSinkService
 
 ```
 
-## 3. Implement your formatter
+## 3. Implement formatter service
 
-* create `YourFormatter` extend `AbstractFormatter`  
+* create `YourFormatterService` extend `AbstractFormatterService`  
 
 ```java  
 
-public class YourFormatter extends AbstractFormatter {
+public class YourFormatterService extends AbstractFormatterService {
 
     @Override
     public String getName() {
@@ -162,18 +162,18 @@ public class YourFormatter extends AbstractFormatter {
 * register this formatter using Java SPI  
 
 ```java  
-# create com.moilioncircle.redis.rdb.cli.api.format.Formatter file in src/main/resources/META-INF/services/
+# create com.moilioncircle.redis.rdb.cli.api.format.FormatterService file in src/main/resources/META-INF/services/
 
 |-src
 |____main
 | |____resources
 | | |____META-INF
 | | | |____services
-| | | | |____com.moilioncircle.redis.rdb.cli.api.format.Formatter
+| | | | |____com.moilioncircle.redis.rdb.cli.api.format.FormatterService
 
-# add following content in com.moilioncircle.redis.rdb.cli.api.format.Formatter
+# add following content in com.moilioncircle.redis.rdb.cli.api.format.FormatterService
 
-your.package.YourFormatter
+your.package.YourFormatterService
 
 ```
 
