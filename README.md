@@ -153,7 +153,7 @@ public class YourFormatterService extends AbstractFormatterService {
         getEscaper().encode(key, getOutputStream());
         getEscaper().encode(val, getOutputStream());
         getEscaper().encode('\n', getOutputStream());
-        return context.valueOf(new DummyKeyValuePair());
+        return context;
     }
 }
 
