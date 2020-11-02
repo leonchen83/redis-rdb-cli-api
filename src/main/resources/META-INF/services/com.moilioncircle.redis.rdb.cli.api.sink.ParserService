@@ -1,0 +1,2 @@
+com.moilioncircle.redis.rdb.cli.api.sink.parser.DefaultParserService
+com.moilioncircle.redis.rdb.cli.api.sink.parser.DumpParserService
