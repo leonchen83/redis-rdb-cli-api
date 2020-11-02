@@ -53,17 +53,16 @@ public class JsonEscaper implements Escaper {
     public final static int SURR1_LAST = 0xDBFF;
     public final static int SURR2_LAST = 0xDFFF;
 
-    public JsonEscaper() {
-    }
-
     @Override
     public void encode(int b, OutputStream out) {
-        throw new UnsupportedOperationException();
+        OutputStreams.write(b & 0xFF, out);
     }
 
     @Override
     public void encode(byte[] bytes, int off, int len, OutputStream out) {
-        throw new UnsupportedOperationException();
+        if (bytes == null) return;
+        final String str = new String(bytes, off, len);
+        encode(str, 0, str.length(), out);
     }
 
     @Override

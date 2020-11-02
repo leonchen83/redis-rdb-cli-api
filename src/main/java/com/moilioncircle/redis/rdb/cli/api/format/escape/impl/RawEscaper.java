@@ -27,14 +27,14 @@ import com.moilioncircle.redis.rdb.cli.api.support.OutputStreams;
  */
 public class RawEscaper implements Escaper {
 
-	@Override
-	public void encode(int b, OutputStream out) {
-		OutputStreams.write(b & 0xFF, out);
-	}
-	
-	@Override
-	public void encode(byte[] bytes, int off, int len, OutputStream out) {
-		if (bytes == null) return;
-		OutputStreams.write(bytes, off, len, out);
-	}
+    @Override
+    public void encode(int b, OutputStream out) {
+        OutputStreams.write(b & 0xFF, out);
+    }
+    
+    @Override
+    public void encode(byte[] bytes, int off, int len, OutputStream out) {
+        if (bytes == null) return;
+        OutputStreams.write(bytes, off, len, out);
+    }
 }

@@ -31,7 +31,7 @@ import com.moilioncircle.redis.replicator.rdb.datatype.ContextKeyValuePair;
  */
 public interface FormatterService {
 
-    String getName();
+    String format();
     
     Escaper getEscaper();
 

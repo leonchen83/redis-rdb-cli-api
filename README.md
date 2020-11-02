@@ -16,7 +16,7 @@ This project used as API in project [redis-rdb-cli](https://github.com/leonchen8
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.your.company</groupId>
-    <artifactId>your-sink-service</artifactId>
+    <artifactId>your-service</artifactId>
     <version>1.0.0</version>
     
     <properties>
@@ -29,7 +29,7 @@ This project used as API in project [redis-rdb-cli](https://github.com/leonchen8
         <dependency>
             <groupId>com.moilioncircle</groupId>
             <artifactId>redis-rdb-cli-api</artifactId>
-            <version>1.1.0</version>
+            <version>1.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -142,7 +142,7 @@ your.package.YourSinkService
 public class YourFormatterService extends AbstractFormatterService {
 
     @Override
-    public String getName() {
+    public String format() {
         return "test";
     }
 
@@ -183,7 +183,7 @@ your.package.YourFormatterService
 
 mvn clean install
 
-cp ./target/your-sink-service-1.0.0-jar-with-dependencies.jar /path/to/redis-rdb-cli/lib
+cp ./target/your-service-1.0.0-jar-with-dependencies.jar /path/to/redis-rdb-cli/lib
 ```
 ## 5. Run
 
