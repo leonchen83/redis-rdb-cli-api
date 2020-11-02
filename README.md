@@ -35,7 +35,7 @@ This project used as API in project [redis-rdb-cli](https://github.com/leonchen8
         <dependency>
             <groupId>com.moilioncircle</groupId>
             <artifactId>redis-replicator</artifactId>
-            <version>3.4.0</version>
+            <version>3.4.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
