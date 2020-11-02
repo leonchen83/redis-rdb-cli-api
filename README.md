@@ -150,9 +150,9 @@ public class YourFormatter extends AbstractFormatter {
     public Event applyString(RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         BaseRdbParser parser = new BaseRdbParser(in);
         byte[] val = parser.rdbLoadEncodedStringObject().first();
-        OutputStreams.write(key, getOutputStream());
-        OutputStreams.write(val, getOutputStream());
-        OutputStreams.write('\n', getOutputStream());
+        getEscaper().encode(key, getOutputStream());
+        getEscaper().encode(val, getOutputStream());
+        getEscaper().encode('\n', getOutputStream());
         return context.valueOf(new DummyKeyValuePair());
     }
 }
