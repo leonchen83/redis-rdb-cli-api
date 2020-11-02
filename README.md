@@ -198,7 +198,7 @@ ret -s redis://127.0.0.1:6379 -c config.conf -n your-sink-service
 
 ```java  
 
-rct -f test -s redis://127.0.0.1:6379 -o ./out.csv -t string -d 0
+rct -f test -s redis://127.0.0.1:6379 -o ./out.csv -t string -d 0 -e json
 ```
 
 ## 6. Debug sink service
