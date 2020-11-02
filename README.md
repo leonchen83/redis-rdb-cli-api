@@ -194,7 +194,7 @@ cp ./target/your-sink-service-1.0.0-jar-with-dependencies.jar /path/to/redis-rdb
 ret -s redis://127.0.0.1:6379 -c config.conf -n your-sink-service
 ```
 
-* run your formatter
+* run your formatter service
 
 ```java  
 
