@@ -34,17 +34,32 @@ public interface FormatterService {
     String format();
     
     Escaper getEscaper();
-
+    
     Properties getProperties();
 
     OutputStream getOutputStream();
-
-    void setEscaper(Escaper escaper);
     
+    void setEscaper(Escaper escaper);
+
     void setProperties(Properties properties);
     
     void setOutputStream(OutputStream outputStream);
 
+    /*
+     *
+     */
+    default void applyStart(RedisInputStream in) throws IOException {
+    }
+
+    default void applyEnd(RedisInputStream in, int version, long checksum) throws IOException {
+    }
+
+    default void applyRedisProperty(RedisInputStream in, int version, String key, String value) throws IOException {
+    }
+
+    /*
+     *
+     */
     default Event applyString(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         throw new UnsupportedOperationException("must implement this method.");
     }
