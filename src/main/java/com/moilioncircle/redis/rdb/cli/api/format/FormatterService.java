@@ -49,6 +49,12 @@ public interface FormatterService {
     /*
      *
      */
+    default void onEvent(Replicator replicator, Event event) {
+    }
+
+    /*
+     *
+     */
     default void applyStart(RedisInputStream in) throws IOException {
     }
 
