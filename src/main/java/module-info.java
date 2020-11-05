@@ -10,13 +10,11 @@ module com.moilioncircle.redis.rdb.cli.api {
 
     exports com.moilioncircle.redis.rdb.cli.api.format;
     exports com.moilioncircle.redis.rdb.cli.api.format.escape;
-    exports com.moilioncircle.redis.rdb.cli.api.format.escape.impl;
     exports com.moilioncircle.redis.rdb.cli.api.sink;
     exports com.moilioncircle.redis.rdb.cli.api.sink.cmd;
     exports com.moilioncircle.redis.rdb.cli.api.sink.example;
     exports com.moilioncircle.redis.rdb.cli.api.sink.listener;
     exports com.moilioncircle.redis.rdb.cli.api.sink.parser;
-    exports com.moilioncircle.redis.rdb.cli.api.support;
 
     provides SinkService with ExampleSinkService;
     provides ParserService with DefaultParserService, DumpParserService;
