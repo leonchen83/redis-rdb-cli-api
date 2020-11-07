@@ -16,6 +16,11 @@
 
 package com.moilioncircle.redis.rdb.cli.api.format;
 
+import static com.moilioncircle.redis.replicator.Constants.RDB_LOAD_NONE;
+import static com.moilioncircle.redis.replicator.Constants.STREAM_ITEM_FLAG_DELETED;
+import static com.moilioncircle.redis.replicator.Constants.STREAM_ITEM_FLAG_SAMEFIELDS;
+import static com.moilioncircle.redis.replicator.rdb.BaseRdbParser.StringHelper.listPackEntry;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
@@ -24,8 +29,11 @@ import com.moilioncircle.redis.rdb.cli.api.format.escape.Escaper;
 import com.moilioncircle.redis.replicator.Replicator;
 import com.moilioncircle.redis.replicator.event.Event;
 import com.moilioncircle.redis.replicator.io.RedisInputStream;
+import com.moilioncircle.redis.replicator.rdb.BaseRdbParser;
 import com.moilioncircle.redis.replicator.rdb.DefaultRdbValueVisitor;
 import com.moilioncircle.redis.replicator.rdb.datatype.ContextKeyValuePair;
+import com.moilioncircle.redis.replicator.rdb.datatype.Stream;
+import com.moilioncircle.redis.replicator.util.Strings;
 
 /**
  * @author Baoyi Chen
@@ -68,62 +76,194 @@ public interface FormatterService {
      *
      */
     default Event applyString(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyString(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        byte[] val = parser.rdbLoadEncodedStringObject().first();
         return context;
     }
 
     default Event applyList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyList(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long len = parser.rdbLoadLen().len;
+        while (len > 0) {
+            byte[] element = parser.rdbLoadEncodedStringObject().first();
+            len--;
+        }
         return context;
     }
 
     default Event applySet(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applySet(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long len = parser.rdbLoadLen().len;
+        while (len > 0) {
+            byte[] element = parser.rdbLoadEncodedStringObject().first();
+            len--;
+        }
         return context;
     }
 
     default Event applyZSet(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyZSet(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long len = parser.rdbLoadLen().len;
+        while (len > 0) {
+            byte[] element = parser.rdbLoadEncodedStringObject().first();
+            double score = parser.rdbLoadDoubleValue();
+            len--;
+        }
         return context;
     }
 
     default Event applyZSet2(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyZSet2(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long len = parser.rdbLoadLen().len;
+        while (len > 0) {
+            byte[] element = parser.rdbLoadEncodedStringObject().first();
+            double score = parser.rdbLoadBinaryDoubleValue();
+            len--;
+        }
         return context;
     }
 
     default Event applyHash(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyHash(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long len = parser.rdbLoadLen().len;
+        while (len > 0) {
+            byte[] field = parser.rdbLoadEncodedStringObject().first();
+            byte[] value = parser.rdbLoadEncodedStringObject().first();
+            len--;
+        }
         return context;
     }
 
     default Event applyHashZipMap(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyHashZipMap(in, version);
-        return context;
+        BaseRdbParser parser = new BaseRdbParser(in);
+
+        RedisInputStream stream = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        BaseRdbParser.LenHelper.zmlen(stream); // zmlen
+        while (true) {
+            int zmEleLen = BaseRdbParser.LenHelper.zmElementLen(stream);
+            if (zmEleLen == 255) {
+                return context;
+            }
+            byte[] field = BaseRdbParser.StringHelper.bytes(stream, zmEleLen);
+            zmEleLen = BaseRdbParser.LenHelper.zmElementLen(stream);
+            if (zmEleLen == 255) {
+                //value is null
+                // handle <filed, null>
+                return context;
+            }
+            int free = BaseRdbParser.LenHelper.free(stream);
+            byte[] value = BaseRdbParser.StringHelper.bytes(stream, zmEleLen);
+            BaseRdbParser.StringHelper.skip(stream, free);
+            // handle <field, value>
+        }
     }
 
     default Event applyListZipList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyListZipList(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        RedisInputStream stream = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        BaseRdbParser.LenHelper.zlbytes(stream); // zlbytes
+        BaseRdbParser.LenHelper.zltail(stream); // zltail
+        int zllen = BaseRdbParser.LenHelper.zllen(stream);
+        for (int i = 0; i < zllen; i++) {
+            byte[] element = BaseRdbParser.StringHelper.zipListEntry(stream);
+            // handle element
+        }
+        int zlend = BaseRdbParser.LenHelper.zlend(stream);
+        if (zlend != 255) {
+            throw new AssertionError("zlend expect 255 but " + zlend);
+        }
         return context;
     }
 
     default Event applySetIntSet(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applySetIntSet(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        RedisInputStream stream = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        int encoding = BaseRdbParser.LenHelper.encoding(stream);
+        long lenOfContent = BaseRdbParser.LenHelper.lenOfContent(stream);
+        for (long i = 0; i < lenOfContent; i++) {
+            switch (encoding) {
+                case 2:
+                    String element = String.valueOf(stream.readInt(2));
+                    break;
+                case 4:
+                    element = String.valueOf(stream.readInt(4));
+                    break;
+                case 8:
+                    element = String.valueOf(stream.readLong(8));
+                    break;
+                default:
+                    throw new AssertionError("expect encoding [2,4,8] but:" + encoding);
+            }
+        }
         return context;
     }
 
     default Event applyZSetZipList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyZSetZipList(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+
+        RedisInputStream stream = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        BaseRdbParser.LenHelper.zlbytes(stream); // zlbytes
+        BaseRdbParser.LenHelper.zltail(stream); // zltail
+        int zllen = BaseRdbParser.LenHelper.zllen(stream);
+        while (zllen > 0) {
+            byte[] element = BaseRdbParser.StringHelper.zipListEntry(stream);
+            zllen--;
+            double score = Double.valueOf(Strings.toString(BaseRdbParser.StringHelper.zipListEntry(stream)));
+            zllen--;
+        }
+        int zlend = BaseRdbParser.LenHelper.zlend(stream);
+        if (zlend != 255) {
+            throw new AssertionError("zlend expect 255 but " + zlend);
+        }
         return context;
     }
 
     default Event applyHashZipList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyHashZipList(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+
+        RedisInputStream stream = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        BaseRdbParser.LenHelper.zlbytes(stream); // zlbytes
+        BaseRdbParser.LenHelper.zltail(stream); // zltail
+        int zllen = BaseRdbParser.LenHelper.zllen(stream);
+        while (zllen > 0) {
+            byte[] field = BaseRdbParser.StringHelper.zipListEntry(stream);
+            zllen--;
+            byte[] value = BaseRdbParser.StringHelper.zipListEntry(stream);
+            zllen--;
+        }
+        int zlend = BaseRdbParser.LenHelper.zlend(stream);
+        if (zlend != 255) {
+            throw new AssertionError("zlend expect 255 but " + zlend);
+        }
         return context;
     }
 
     default Event applyListQuickList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyListQuickList(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+
+        long len = parser.rdbLoadLen().len;
+        for (long i = 0; i < len; i++) {
+            RedisInputStream stream = new RedisInputStream(parser.rdbGenericLoadStringObject(RDB_LOAD_NONE));
+
+            BaseRdbParser.LenHelper.zlbytes(stream); // zlbytes
+            BaseRdbParser.LenHelper.zltail(stream); // zltail
+            int zllen = BaseRdbParser.LenHelper.zllen(stream);
+            for (int j = 0; j < zllen; j++) {
+                byte[] element = BaseRdbParser.StringHelper.zipListEntry(stream);
+            }
+            int zlend = BaseRdbParser.LenHelper.zlend(stream);
+            if (zlend != 255) {
+                throw new AssertionError("zlend expect 255 but " + zlend);
+            }
+        }
         return context;
     }
 
@@ -138,7 +278,88 @@ public interface FormatterService {
     }
 
     default Event applyStreamListPacks(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
-        new DefaultRdbValueVisitor(replicator).applyStreamListPacks(in, version);
+        BaseRdbParser parser = new BaseRdbParser(in);
+
+        // Entries
+        long listPacks = parser.rdbLoadLen().len;
+        while (listPacks-- > 0) {
+            RedisInputStream rawId = new RedisInputStream(parser.rdbLoadPlainStringObject());
+            Stream.ID baseId = new Stream.ID(rawId.readLong(8, false), rawId.readLong(8, false));
+            RedisInputStream listPack = new RedisInputStream(parser.rdbLoadPlainStringObject());
+            listPack.skip(4); // total-bytes
+            listPack.skip(2); // num-elements
+            long count = Long.parseLong(Strings.toString(listPackEntry(listPack))); // count
+            long deleted = Long.parseLong(Strings.toString(listPackEntry(listPack))); // deleted
+            int numFields = Integer.parseInt(Strings.toString(listPackEntry(listPack))); // num-fields
+            byte[][] tempFields = new byte[numFields][];
+            for (int i = 0; i < numFields; i++) {
+                tempFields[i] = listPackEntry(listPack);
+            }
+            listPackEntry(listPack); // 0
+
+            long total = count + deleted;
+            while (total-- > 0) {
+                int flag = Integer.parseInt(Strings.toString(listPackEntry(listPack)));
+                long ms = Long.parseLong(Strings.toString(listPackEntry(listPack)));
+                long seq = Long.parseLong(Strings.toString(listPackEntry(listPack)));
+                Stream.ID id = baseId.delta(ms, seq);
+                boolean delete = (flag & STREAM_ITEM_FLAG_DELETED) != 0;
+                if ((flag & STREAM_ITEM_FLAG_SAMEFIELDS) != 0) {
+                    for (int i = 0; i < numFields; i++) {
+                        byte[] value = listPackEntry(listPack);
+                        byte[] field = tempFields[i];
+                        // handle <field value>
+                    }
+                    
+                    // handle entry <id, new Stream.Entry(id, delete, fields)>
+                } else {
+                    numFields = Integer.parseInt(Strings.toString(listPackEntry(listPack)));
+                    for (int i = 0; i < numFields; i++) {
+                        byte[] field = listPackEntry(listPack);
+                        byte[] value = listPackEntry(listPack);
+                        // handle <field value>
+                    }
+                    // handle entry <id, new Stream.Entry(id, delete, fields)>
+                }
+                listPackEntry(listPack); // lp-count
+            }
+            int lpend = listPack.read(); // lp-end
+            if (lpend != 255) {
+                throw new AssertionError("listpack expect 255 but " + lpend);
+            }
+        }
+
+        long length = parser.rdbLoadLen().len;
+        Stream.ID lastId = new Stream.ID(parser.rdbLoadLen().len, parser.rdbLoadLen().len);
+        // handle <length, lastId>
+
+        long groupCount = parser.rdbLoadLen().len;
+        while (groupCount-- > 0) {
+            byte[] groupName = parser.rdbLoadPlainStringObject().first();
+            Stream.ID groupLastId = new Stream.ID(parser.rdbLoadLen().len, parser.rdbLoadLen().len);
+            // handle <groupName , groupLastId>
+
+            long globalPel = parser.rdbLoadLen().len;
+            while (globalPel-- > 0) {
+                Stream.ID rawId = new Stream.ID(in.readLong(8, false), in.readLong(8, false));
+                long deliveryTime = parser.rdbLoadMillisecondTime();
+                long deliveryCount = parser.rdbLoadLen().len;
+                // handle group pending entry <rawId, new Stream.Nack(rawId, null, deliveryTime, deliveryCount)>
+            }
+
+            long consumerCount = parser.rdbLoadLen().len;
+            while (consumerCount-- > 0) {
+                byte[] consumerName = parser.rdbLoadPlainStringObject().first();
+                long seenTime = parser.rdbLoadMillisecondTime();
+                // handle <consumerName, seenTime>
+
+                long pel = parser.rdbLoadLen().len;
+                while (pel-- > 0) {
+                    Stream.ID rawId = new Stream.ID(in.readLong(8, false), in.readLong(8, false));
+                    // handle consumer pending entry <rawId>
+                }
+            }
+        }
         return context;
     }
 }
