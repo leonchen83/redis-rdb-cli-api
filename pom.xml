@@ -71,7 +71,7 @@
                         <configuration>
                             <archive combine.children="append">
                                 <manifestEntries>
-                                    <Automatic-Module-Name>com.moilioncircle.redis.sink.api</Automatic-Module-Name>
+                                    <Automatic-Module-Name>com.moilioncircle.redis.rdb.cli.api</Automatic-Module-Name>
                                 </manifestEntries>
                             </archive>
                         </configuration>
@@ -219,7 +219,7 @@
                 <configuration>
                     <archive combine.children="append">
                         <manifestEntries>
-                            <Automatic-Module-Name>com.moilioncircle.redis.sink.api</Automatic-Module-Name>
+                            <Automatic-Module-Name>com.moilioncircle.redis.rdb.cli.api</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>
