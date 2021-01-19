@@ -1,1 +1,1 @@
-com.moilioncircle.redis.sink.api.example.ExampleSinkService
+com.moilioncircle.redis.rdb.cli.api.sink.example.ExampleSinkService

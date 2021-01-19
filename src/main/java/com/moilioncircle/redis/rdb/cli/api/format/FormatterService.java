@@ -38,6 +38,7 @@ import com.moilioncircle.redis.replicator.util.Strings;
 /**
  * @author Baoyi Chen
  */
+@SuppressWarnings({"unused", "resource"})
 public interface FormatterService {
 
     String format();
