@@ -20,6 +20,7 @@ import static com.moilioncircle.redis.replicator.util.Concurrents.terminateQuiet
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,10 +60,13 @@ public class AsyncEventListener implements EventListener {
 
             // 1
             this.rdbBarrier = new CyclicBarrier(threads);
+    
+            CountDownLatch close = new CountDownLatch(1);
 
             // 2
             this.closeBarrier = new CyclicBarrier(threads, () -> {
                 this.listener.onEvent(r, new ClosedCommand());
+                close.countDown();
             });
 
             // 3
@@ -77,10 +81,16 @@ public class AsyncEventListener implements EventListener {
                         this.listener.onEvent(r, new ClosingCommand());
                         await(closeBarrier);
                     });
-                    terminateQuietly(this.executors[i], 0, MILLISECONDS);
+                }
+                try {
+                    close.await();
+                    for (int i = 0; i < this.executors.length; i++) {
+                        terminateQuietly(this.executors[i], 0, MILLISECONDS);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             });
-
         } else {
             r.addCloseListener(rep -> {
                 this.listener.onEvent(r, new ClosingCommand());
