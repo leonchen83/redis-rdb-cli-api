@@ -16,6 +16,8 @@
 
 package com.moilioncircle.redis.rdb.cli.api.format;
 
+import static com.moilioncircle.redis.replicator.Constants.QUICKLIST_NODE_CONTAINER_PACKED;
+import static com.moilioncircle.redis.replicator.Constants.QUICKLIST_NODE_CONTAINER_PLAIN;
 import static com.moilioncircle.redis.replicator.Constants.RDB_LOAD_NONE;
 import static com.moilioncircle.redis.replicator.Constants.STREAM_ITEM_FLAG_DELETED;
 import static com.moilioncircle.redis.replicator.Constants.STREAM_ITEM_FLAG_SAMEFIELDS;
@@ -33,6 +35,7 @@ import com.moilioncircle.redis.replicator.rdb.BaseRdbParser;
 import com.moilioncircle.redis.replicator.rdb.DefaultRdbValueVisitor;
 import com.moilioncircle.redis.replicator.rdb.datatype.ContextKeyValuePair;
 import com.moilioncircle.redis.replicator.rdb.datatype.Stream;
+import com.moilioncircle.redis.replicator.util.ByteArray;
 import com.moilioncircle.redis.replicator.util.Strings;
 
 /**
@@ -76,6 +79,10 @@ public interface FormatterService {
     /*
      *
      */
+    default Event applyFunction(Replicator replicator, RedisInputStream in, int version, int type) throws IOException {
+        return new DefaultRdbValueVisitor(replicator).applyFunction(in, version);
+    }
+    
     default Event applyString(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         BaseRdbParser parser = new BaseRdbParser(in);
         
@@ -226,6 +233,25 @@ public interface FormatterService {
         }
         return context;
     }
+    
+    default Event applyZSetListPack(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        RedisInputStream listPack = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        listPack.skip(4); // total-bytes
+        int len = listPack.readInt(2);
+        while (len > 0) {
+            byte[] element = listPackEntry(listPack);
+            len--;
+            double score = Double.valueOf(Strings.toString(listPackEntry(listPack)));
+            len--;
+        }
+        int lpend = listPack.read(); // lp-end
+        if (lpend != 255) {
+            throw new AssertionError("listpack expect 255 but " + lpend);
+        }
+        return context;
+    }
 
     default Event applyHashZipList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         BaseRdbParser parser = new BaseRdbParser(in);
@@ -246,6 +272,25 @@ public interface FormatterService {
         }
         return context;
     }
+    
+    default Event applyHashListPack(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        RedisInputStream listPack = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        listPack.skip(4); // total-bytes
+        int len = listPack.readInt(2);
+        while (len > 0) {
+            byte[] field = listPackEntry(listPack);
+            len--;
+            byte[] value = listPackEntry(listPack);
+            len--;
+        }
+        int lpend = listPack.read(); // lp-end
+        if (lpend != 255) {
+            throw new AssertionError("listpack expect 255 but " + lpend);
+        }
+        return context;
+    }
 
     default Event applyListQuickList(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         BaseRdbParser parser = new BaseRdbParser(in);
@@ -263,6 +308,33 @@ public interface FormatterService {
             int zlend = BaseRdbParser.LenHelper.zlend(stream);
             if (zlend != 255) {
                 throw new AssertionError("zlend expect 255 but " + zlend);
+            }
+        }
+        return context;
+    }
+    
+    default Event applyListQuickList2(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long len = parser.rdbLoadLen().len;
+        for (long i = 0; i < len; i++) {
+            long container = parser.rdbLoadLen().len;
+            ByteArray bytes = parser.rdbLoadPlainStringObject();
+            if (container == QUICKLIST_NODE_CONTAINER_PLAIN) {
+                byte[] e = bytes.first();
+            } else if (container == QUICKLIST_NODE_CONTAINER_PACKED) {
+                RedisInputStream listPack = new RedisInputStream(bytes);
+                listPack.skip(4); // total-bytes
+                int innerLen = listPack.readInt(2);
+                for (int j = 0; j < innerLen; j++) {
+                    byte[] e = listPackEntry(listPack);
+                }
+                int lpend = listPack.read(); // lp-end
+                if (lpend != 255) {
+                    throw new AssertionError("listpack expect 255 but " + lpend);
+                }
+            } else {
+                throw new UnsupportedOperationException(String.valueOf(container));
             }
         }
         return context;

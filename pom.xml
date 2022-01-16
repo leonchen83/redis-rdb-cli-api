@@ -6,7 +6,7 @@
     
     <groupId>com.moilioncircle</groupId>
     <artifactId>redis-rdb-cli-api</artifactId>
-    <version>1.6.0</version>
+    <version>1.7.0</version>
     
     <name>redis-rdb-cli-api</name>
     <description>redis-rdb-cli-api used in redis-rdb-cli</description>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.moilioncircle</groupId>
             <artifactId>redis-replicator</artifactId>
-            <version>[3.4.0, )</version>
+            <version>[3.6.0, )</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -67,36 +67,13 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.1.2</version>
+                        <version>3.2.0</version>
                         <configuration>
                             <archive combine.children="append">
                                 <manifestEntries>
                                     <Automatic-Module-Name>com.moilioncircle.redis.rdb.cli.api</Automatic-Module-Name>
                                 </manifestEntries>
                             </archive>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-toolchains-plugin</artifactId>
-                        <version>3.0.0</version>
-                        <executions>
-                            <execution>
-                                <id>toolchain</id>
-                                <goals>
-                                    <goal>toolchain</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <toolchains>
-                                <jdk>
-                                    <version>9</version>
-                                </jdk>
-                                <jdk>
-                                    <version>1.8</version>
-                                </jdk>
-                            </toolchains>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -113,31 +90,24 @@
                                     <excludes>
                                         <exclude>module-info.java</exclude>
                                     </excludes>
+                                    <release>8</release>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>default-compile</id>
                                 <configuration>
-                                    <jdkToolchain>
-                                        <version>[9, )</version>
-                                    </jdkToolchain>
                                     <release>9</release>
                                 </configuration>
                             </execution>
                         </executions>
                         <configuration>
-                            <jdkToolchain>
-                                <version>[1.8, )</version>
-                            </jdkToolchain>
-                            <source>${maven.compiler.source}</source>
-                            <target>${maven.compiler.target}</target>
                             <encoding>${project.build.sourceEncoding}</encoding>
                         </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                         <configuration>
                             <encoding>${project.build.sourceEncoding}</encoding>
                         </configuration>
@@ -145,17 +115,14 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.1.1</version>
+                        <version>3.3.0</version>
                         <configuration>
                             <source>${maven.compiler.source}</source>
-                            <additionalparam>-Xdoclint:none</additionalparam>
+                            <doclint>none</doclint>
                             <encoding>${project.build.sourceEncoding}</encoding>
                             <sourceFileExcludes>
                                 <sourceFileExclude>**/module-info.java</sourceFileExclude>
                             </sourceFileExcludes>
-                            <jdkToolchain>
-                                <version>[9, )</version>
-                            </jdkToolchain>
                         </configuration>
                         <executions>
                             <execution>
@@ -169,7 +136,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -182,7 +149,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <phase>verify</phase>
@@ -229,36 +196,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.2.0</version>
                 <configuration>
                     <archive combine.children="append">
                         <manifestEntries>
                             <Automatic-Module-Name>com.moilioncircle.redis.rdb.cli.api</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-toolchains-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>toolchain</id>
-                        <goals>
-                            <goal>toolchain</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <toolchains>
-                        <jdk>
-                            <version>9</version>
-                        </jdk>
-                        <jdk>
-                            <version>1.8</version>
-                        </jdk>
-                    </toolchains>
                 </configuration>
             </plugin>
             <plugin>
@@ -275,24 +219,17 @@
                             <excludes>
                                 <exclude>module-info.java</exclude>
                             </excludes>
+                            <release>8</release>
                         </configuration>
                     </execution>
                     <execution>
                         <id>default-compile</id>
                         <configuration>
-                            <jdkToolchain>
-                                <version>[9, )</version>
-                            </jdkToolchain>
                             <release>9</release>
                         </configuration>
                     </execution>
                 </executions>
                 <configuration>
-                    <jdkToolchain>
-                        <version>[1.8, )</version>
-                    </jdkToolchain>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>

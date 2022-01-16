@@ -36,7 +36,9 @@ import com.moilioncircle.redis.replicator.event.PostCommandSyncEvent;
 import com.moilioncircle.redis.replicator.event.PostRdbSyncEvent;
 import com.moilioncircle.redis.replicator.event.PreCommandSyncEvent;
 import com.moilioncircle.redis.replicator.event.PreRdbSyncEvent;
+import com.moilioncircle.redis.replicator.rdb.datatype.Function;
 import com.moilioncircle.redis.replicator.rdb.datatype.KeyValuePair;
+import com.moilioncircle.redis.replicator.rdb.dump.datatype.DumpFunction;
 
 /**
  * @author Baoyi Chen
@@ -105,7 +107,9 @@ public class AsyncEventListener implements EventListener {
             if (event instanceof PreRdbSyncEvent ||
                     event instanceof PostRdbSyncEvent ||
                     event instanceof PreCommandSyncEvent ||
-                    event instanceof PostCommandSyncEvent) {
+                    event instanceof PostCommandSyncEvent ||
+                    event instanceof Function || 
+                    event instanceof DumpFunction) {
                 // 1
                 if (event instanceof PreRdbSyncEvent) {
                     reset(rdbBarrier);
