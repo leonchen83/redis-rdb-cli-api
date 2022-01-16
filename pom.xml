@@ -6,7 +6,7 @@
     
     <groupId>com.moilioncircle</groupId>
     <artifactId>redis-rdb-cli-api</artifactId>
-    <version>1.7.0</version>
+    <version>1.6.0</version>
     
     <name>redis-rdb-cli-api</name>
     <description>redis-rdb-cli-api used in redis-rdb-cli</description>
