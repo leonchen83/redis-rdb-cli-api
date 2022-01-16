@@ -110,9 +110,7 @@ public class AsyncEventListener implements EventListener {
             if (event instanceof PreRdbSyncEvent ||
                     event instanceof PostRdbSyncEvent ||
                     event instanceof PreCommandSyncEvent ||
-                    event instanceof PostCommandSyncEvent ||
-                    event instanceof Function || 
-                    event instanceof DumpFunction) {
+                    event instanceof PostCommandSyncEvent) {
                 // 1
                 if (event instanceof PreRdbSyncEvent) {
                     reset(rdbBarrier);
@@ -129,7 +127,9 @@ public class AsyncEventListener implements EventListener {
                         this.executors[i].submit(() -> await(rdbBarrier));
                     }
                 }
-            } else if (event instanceof KeyValuePair) {
+            } else if (event instanceof KeyValuePair || 
+                    event instanceof Function || 
+                    event instanceof DumpFunction) {
                 int i = count++ & (executors.length - 1);
                 this.executors[i].submit(() -> this.listener.onEvent(replicator, event));
             } else if (event instanceof Command) {
