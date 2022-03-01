@@ -435,4 +435,93 @@ public interface FormatterService {
         }
         return context;
     }
+    
+    default Event applyStreamListPacks2(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        // Entries
+        long listPacks = parser.rdbLoadLen().len;
+        while (listPacks-- > 0) {
+            RedisInputStream rawId = new RedisInputStream(parser.rdbLoadPlainStringObject());
+            Stream.ID baseId = new Stream.ID(rawId.readLong(8, false), rawId.readLong(8, false));
+            RedisInputStream listPack = new RedisInputStream(parser.rdbLoadPlainStringObject());
+            listPack.skip(4); // total-bytes
+            listPack.skip(2); // num-elements
+            long count = Long.parseLong(Strings.toString(listPackEntry(listPack))); // count
+            long deleted = Long.parseLong(Strings.toString(listPackEntry(listPack))); // deleted
+            int numFields = Integer.parseInt(Strings.toString(listPackEntry(listPack))); // num-fields
+            byte[][] tempFields = new byte[numFields][];
+            for (int i = 0; i < numFields; i++) {
+                tempFields[i] = listPackEntry(listPack);
+            }
+            listPackEntry(listPack); // 0
+            
+            long total = count + deleted;
+            while (total-- > 0) {
+                int flag = Integer.parseInt(Strings.toString(listPackEntry(listPack)));
+                long ms = Long.parseLong(Strings.toString(listPackEntry(listPack)));
+                long seq = Long.parseLong(Strings.toString(listPackEntry(listPack)));
+                Stream.ID id = baseId.delta(ms, seq);
+                boolean delete = (flag & STREAM_ITEM_FLAG_DELETED) != 0;
+                if ((flag & STREAM_ITEM_FLAG_SAMEFIELDS) != 0) {
+                    for (int i = 0; i < numFields; i++) {
+                        byte[] value = listPackEntry(listPack);
+                        byte[] field = tempFields[i];
+                        // handle <field value>
+                    }
+                    
+                    // handle entry <id, new Stream.Entry(id, delete, fields)>
+                } else {
+                    numFields = Integer.parseInt(Strings.toString(listPackEntry(listPack)));
+                    for (int i = 0; i < numFields; i++) {
+                        byte[] field = listPackEntry(listPack);
+                        byte[] value = listPackEntry(listPack);
+                        // handle <field value>
+                    }
+                    // handle entry <id, new Stream.Entry(id, delete, fields)>
+                }
+                listPackEntry(listPack); // lp-count
+            }
+            int lpend = listPack.read(); // lp-end
+            if (lpend != 255) {
+                throw new AssertionError("listpack expect 255 but " + lpend);
+            }
+        }
+        
+        long length = parser.rdbLoadLen().len;
+        Stream.ID lastId = new Stream.ID(parser.rdbLoadLen().len, parser.rdbLoadLen().len);
+        Stream.ID firstId = new Stream.ID(parser.rdbLoadLen().len, parser.rdbLoadLen().len);
+        Stream.ID maxDeletedEntryId = new Stream.ID(parser.rdbLoadLen().len, parser.rdbLoadLen().len);
+        long entriesAdded = parser.rdbLoadLen().len;
+        // handle <length, lastId, firstId, maxDeletedEntryId, entriesAdded>
+        long groupCount = parser.rdbLoadLen().len;
+        while (groupCount-- > 0) {
+            byte[] groupName = parser.rdbLoadPlainStringObject().first();
+            Stream.ID groupLastId = new Stream.ID(parser.rdbLoadLen().len, parser.rdbLoadLen().len);
+            long entriesRead = parser.rdbLoadLen().len;
+            // handle <groupName, groupLastId, entriesRead>
+            
+            long globalPel = parser.rdbLoadLen().len;
+            while (globalPel-- > 0) {
+                Stream.ID rawId = new Stream.ID(in.readLong(8, false), in.readLong(8, false));
+                long deliveryTime = parser.rdbLoadMillisecondTime();
+                long deliveryCount = parser.rdbLoadLen().len;
+                // handle group pending entry <rawId, new Stream.Nack(rawId, null, deliveryTime, deliveryCount)>
+            }
+            
+            long consumerCount = parser.rdbLoadLen().len;
+            while (consumerCount-- > 0) {
+                byte[] consumerName = parser.rdbLoadPlainStringObject().first();
+                long seenTime = parser.rdbLoadMillisecondTime();
+                // handle <consumerName, seenTime>
+                
+                long pel = parser.rdbLoadLen().len;
+                while (pel-- > 0) {
+                    Stream.ID rawId = new Stream.ID(in.readLong(8, false), in.readLong(8, false));
+                    // handle consumer pending entry <rawId>
+                }
+            }
+        }
+        return context;
+    }
 }
