@@ -83,6 +83,10 @@ public interface FormatterService {
         return new DefaultRdbValueVisitor(replicator).applyFunction(in, version);
     }
     
+    default Event applyFunction2(Replicator replicator, RedisInputStream in, int version, int type) throws IOException {
+        return new DefaultRdbValueVisitor(replicator).applyFunction2(in, version);
+    }
+    
     default Event applyString(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         BaseRdbParser parser = new BaseRdbParser(in);
         

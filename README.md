@@ -29,13 +29,13 @@ This project used as API in project [redis-rdb-cli](https://github.com/leonchen8
         <dependency>
             <groupId>com.moilioncircle</groupId>
             <artifactId>redis-rdb-cli-api</artifactId>
-            <version>1.7.0</version>
+            <version>1.8.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.moilioncircle</groupId>
             <artifactId>redis-replicator</artifactId>
-            <version>[3.6.2, )</version>
+            <version>[3.6.3, )</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
