@@ -360,6 +360,41 @@ public interface FormatterService {
         }
         return context;
     }
+    
+    default Event applyHashMetadata(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException{
+        BaseRdbParser parser = new BaseRdbParser(in);
+        
+        long minExpire = parser.rdbLoadMillisecondTime();
+        long len = parser.rdbLoadLen().len;
+        while (len > 0) {
+            long ttl = parser.rdbLoadLen().len;
+            byte[] field = parser.rdbLoadEncodedStringObject().first();
+            byte[] value = parser.rdbLoadEncodedStringObject().first();
+            len--;
+        }
+        return context;
+    }
+    
+    default Event applyHashListPackEx(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
+        BaseRdbParser parser = new BaseRdbParser(in);
+        long minExpire = parser.rdbLoadMillisecondTime();
+        RedisInputStream listPack = new RedisInputStream(parser.rdbLoadPlainStringObject());
+        listPack.skip(4); // total-bytes
+        int len = listPack.readInt(2);
+        while (len > 0) {
+            byte[] field = listPackEntry(listPack);
+            len--;
+            byte[] value = listPackEntry(listPack);
+            len--;
+            long ttl = Long.parseLong(Strings.toString(listPackEntry(listPack)));
+            len--;
+        }
+        int lpend = listPack.read(); // lp-end
+        if (lpend != 255) {
+            throw new AssertionError("listpack expect 255 but " + lpend);
+        }
+        return context;
+    }
 
     default Event applyModule(Replicator replicator, RedisInputStream in, int version, byte[] key, int type, ContextKeyValuePair context) throws IOException {
         new DefaultRdbValueVisitor(replicator).applyModule(in, version);
